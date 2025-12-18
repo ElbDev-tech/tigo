@@ -25,16 +25,16 @@ export default function IncidenciasView() {
   const loadData = async () => {
     try {
       const [incidenciasRes, clientesRes] = await Promise.all([
-        supabase.from('incidencias').select('*').order('created_at', { ascending: false }),
-        supabase.from('clientes').select('*'),
+        (supabase as any).from('incidencias').select('*').order('created_at', { ascending: false }),
+        (supabase as any).from('clientes').select('*'),
       ]);
 
       if (incidenciasRes.error) throw incidenciasRes.error;
       if (clientesRes.error) throw clientesRes.error;
 
-      const incidenciasConClientes = incidenciasRes.data.map((inc) => ({
+      const incidenciasConClientes = (incidenciasRes.data as Incidencia[] || []).map((inc) => ({
         ...inc,
-        cliente: clientesRes.data.find((c) => c.id === inc.id_cliente),
+        cliente: (clientesRes.data as Cliente[] || []).find((c) => c.id === inc.id_cliente),
       }));
 
       setIncidencias(incidenciasConClientes);
@@ -50,13 +50,13 @@ export default function IncidenciasView() {
     e.preventDefault();
     try {
       if (editingIncidencia) {
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from('incidencias')
           .update(formData)
           .eq('id', editingIncidencia.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from('incidencias').insert(formData);
+        const { error } = await (supabase as any).from('incidencias').insert(formData);
         if (error) throw error;
       }
       setShowModal(false);
@@ -70,7 +70,7 @@ export default function IncidenciasView() {
   const handleDelete = async (id: string) => {
     if (!confirm('¿Está seguro de eliminar esta incidencia?')) return;
     try {
-      const { error } = await supabase.from('incidencias').delete().eq('id', id);
+      const { error } = await (supabase as any).from('incidencias').delete().eq('id', id);
       if (error) throw error;
       loadData();
     } catch (error) {
@@ -109,30 +109,30 @@ export default function IncidenciasView() {
   const getEstadoColor = (estado: string) => {
     switch (estado) {
       case 'abierta':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
       case 'en_proceso':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
       case 'resuelta':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
       case 'cerrada':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
     }
   };
 
   const getPrioridadColor = (prioridad: string) => {
     switch (prioridad) {
       case 'baja':
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
       case 'media':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
       case 'alta':
-        return 'bg-orange-100 text-orange-800';
+        return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400';
       case 'critica':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
     }
   };
 
@@ -148,8 +148,8 @@ export default function IncidenciasView() {
     <div>
       <div className="mb-6 flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Gestión de Incidencias</h1>
-          <p className="text-gray-600 mt-1">Registro y seguimiento de problemas reportados</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Gestión de Incidencias</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">Registro y seguimiento de problemas reportados</p>
         </div>
         <button
           onClick={() => {
@@ -171,7 +171,7 @@ export default function IncidenciasView() {
             placeholder="Buscar por descripción o cliente..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           />
         </div>
       </div>
@@ -180,13 +180,13 @@ export default function IncidenciasView() {
         {filteredIncidencias.map((incidencia) => (
           <div
             key={incidencia.id}
-            className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
+            className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow"
           >
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-3">
                   <AlertCircle className="w-5 h-5 text-red-500" />
-                  <h3 className="text-lg font-semibold text-gray-900">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                     {incidencia.cliente
                       ? `${incidencia.cliente.nombres} ${incidencia.cliente.apellidos}`
                       : 'Cliente no encontrado'}
@@ -198,8 +198,8 @@ export default function IncidenciasView() {
                     {incidencia.estado}
                   </span>
                 </div>
-                <p className="text-gray-600 mb-2">{incidencia.descripcion}</p>
-                <div className="flex items-center gap-4 text-sm text-gray-500">
+                <p className="text-gray-600 dark:text-gray-300 mb-2">{incidencia.descripcion}</p>
+                <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                   <span>Tipo: {incidencia.tipo_incidencia.replace('_', ' ')}</span>
                   <span>Fecha: {new Date(incidencia.fecha).toLocaleDateString()}</span>
                 </div>
@@ -207,13 +207,13 @@ export default function IncidenciasView() {
               <div className="flex gap-2">
                 <button
                   onClick={() => openEditModal(incidencia)}
-                  className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
                 >
                   <Edit2 className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => handleDelete(incidencia.id)}
-                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -225,10 +225,10 @@ export default function IncidenciasView() {
 
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                   {editingIncidencia ? 'Editar Incidencia' : 'Nueva Incidencia'}
                 </h2>
                 <button
@@ -236,7 +236,7 @@ export default function IncidenciasView() {
                     setShowModal(false);
                     resetForm();
                   }}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                 >
                   <X className="w-6 h-6" />
                 </button>
@@ -244,12 +244,12 @@ export default function IncidenciasView() {
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Cliente</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cliente</label>
                   <select
                     required
                     value={formData.id_cliente}
                     onChange={(e) => setFormData({ ...formData, id_cliente: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   >
                     <option value="">Seleccionar cliente</option>
                     {clientes.map((cliente) => (
@@ -262,11 +262,11 @@ export default function IncidenciasView() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Incidencia</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipo de Incidencia</label>
                     <select
                       value={formData.tipo_incidencia}
                       onChange={(e) => setFormData({ ...formData, tipo_incidencia: e.target.value as any })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     >
                       <option value="falla_servicio">Falla de Servicio</option>
                       <option value="soporte_tecnico">Soporte Técnico</option>
@@ -276,11 +276,11 @@ export default function IncidenciasView() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Estado</label>
                     <select
                       value={formData.estado}
                       onChange={(e) => setFormData({ ...formData, estado: e.target.value as any })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     >
                       <option value="abierta">Abierta</option>
                       <option value="en_proceso">En Proceso</option>
@@ -290,11 +290,11 @@ export default function IncidenciasView() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Prioridad</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Prioridad</label>
                     <select
                       value={formData.prioridad}
                       onChange={(e) => setFormData({ ...formData, prioridad: e.target.value as any })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     >
                       <option value="baja">Baja</option>
                       <option value="media">Media</option>
@@ -305,13 +305,13 @@ export default function IncidenciasView() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descripción</label>
                   <textarea
                     required
                     value={formData.descripcion}
                     onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
                     rows={4}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   />
                 </div>
 
@@ -322,7 +322,7 @@ export default function IncidenciasView() {
                       setShowModal(false);
                       resetForm();
                     }}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                   >
                     Cancelar
                   </button>
